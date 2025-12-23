@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>点名系统</title>
+    <!-- 引入 Remix Icon 图标库 -->
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="background-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Easter Egg Container -->
+    <div id="easter-egg-container" class="easter-egg-container"></div>
+
+    <!-- App Container Layout -->
+    <div class="app-layout">
+        
+        <!-- Left Navigation Sidebar -->
+        <nav class="sidebar">
+            <div class="logo-area">
+                <i class="ri-apps-line"></i>
+            </div>
+            <ul class="nav-links">
+                <li class="active" title="首页" id="nav-home">
+                    <i class="ri-home-5-line"></i>
+                </li>
+                <li title="统计" id="nav-stats">
+                    <i class="ri-bar-chart-line"></i>
+                </li>
+                <li title="概率管理" id="nav-prob">
+                    <i class="ri-equalizer-line"></i>
+                </li>
+                <li title="设置" id="nav-settings">
+                    <i class="ri-settings-4-line"></i>
+                </li>
+                <li title="关于" id="nav-about">
+                    <i class="ri-information-line"></i>
+                </li>
+            </ul>
+            <div class="user-area">
+                <i class="ri-user-smile-line"></i>
+            </div>
+        </nav>
+
+        <!-- Main Content Wrapper -->
+        <div class="main-wrapper">
+            
+            <!-- Top Header -->
+            <header class="top-bar">
+                <div class="breadcrumb">
+                    <span class="crumb-root" data-i18n="system">系统</span>
+                    <i class="ri-arrow-right-s-line separator"></i>
+                    <span class="crumb-current" id="page-title" data-i18n="rollCallPanel">点名面板</span>
+                </div>
+                <div class="window-controls">
+                    <i class="ri-subtract-line"></i>
+                    <i class="ri-checkbox-blank-line"></i>
+                    <i class="ri-close-line close-icon"></i>
+                </div>
+            </header>
+
+            <!-- Content Area (The Roll Call System) -->
+            <main class="content-area">
+                <!-- Home View -->
+                <div class="glass-card" id="home-view">
+                    <div class="card-header">
+                        <h2><i class="ri-user-voice-line"></i> <span data-i18n="classRollCall">课堂点名</span></h2>
+                        <div class="header-actions">
+                            <button id="reset-status-btn" class="mode-btn warning hidden" title="重置点名状态">
+                                <i class="ri-restart-line"></i>
+                            </button>
+                            <button id="mode-btn" class="mode-btn" aria-label="切换点名模式">
+                                <i class="ri-shuffle-line"></i>
+                                <span id="mode-text" data-i18n="randomMode">随机模式</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="card-body">
+                        <div class="display-area">
+                            <div id="student-number" class="number">--</div>
+                            <div id="student-name" class="name" data-i18n="waiting">等待点名</div>
+                        </div>
+
+                        <div class="stats-area" id="stats-area">
+                            <p><i class="ri-pie-chart-line"></i> <span data-i18n="calledCount">已点名</span>: <span id="count">0</span> / 56</p>
+                        </div>
+
+                        <div class="controls">
+                            <button id="start-btn" class="jelly-btn" data-i18n="startCall">开始点名</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistics View -->
+                <div class="glass-card hidden" id="stats-view">
+                    <div class="card-header">
+                        <h2><i class="ri-bar-chart-line"></i> <span data-i18n="statistics">统计数据</span></h2>
+                    </div>
+                    <div class="card-body stats-body">
+                        <div class="stats-overview">
+                            <div class="stat-item">
+                                <h3 data-i18n="totalCalls">总点名次数</h3>
+                                <div class="stat-value" id="total-calls-stat">0</div>
+                            </div>
+                            <div class="stat-item lucky">
+                                <h3 data-i18n="mostCalled">最常被点 (欧皇)</h3>
+                                <div class="stat-value" id="most-called-stat">--</div>
+                                <div class="stat-sub" id="most-called-sub"></div>
+                            </div>
+                        </div>
+                        <div class="recent-history">
+                            <h3 data-i18n="recentHistory">最近记录</h3>
+                            <ul id="history-list" class="history-list">
+                                <!-- Dynamic List -->
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Probability View (New) -->
+                <div class="glass-card settings-view hidden" id="prob-view">
+                    <div class="card-header">
+                        <h2><i class="ri-equalizer-line"></i> <span data-i18n="probSettings">概率管理</span></h2>
+                        <div class="header-actions">
+                            <button id="batch-edit-btn" class="mode-btn">
+                                <i class="ri-list-check"></i> <span data-i18n="batchEdit">批量调整</span>
+                            </button>
+                            <button id="reset-all-btn" class="mode-btn warning">
+                                <i class="ri-refresh-line"></i> <span data-i18n="resetAll">重置所有</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Batch Controls (Moved here) -->
+                    <div class="batch-controls hidden" id="batch-controls">
+                        <div class="batch-actions">
+                            <label class="checkbox-container">
+                                <input type="checkbox" id="select-all-checkbox">
+                                <span class="checkmark"></span>
+                                <span data-i18n="selectAll">全选</span>
+                            </label>
+                            <span class="selected-count"><span id="selected-count-num">0</span> <span data-i18n="itemsSelected">项已选</span></span>
+                        </div>
+                        <div class="batch-buttons">
+                            <button id="cancel-batch-btn" class="mode-btn small" data-i18n="cancel">取消</button>
+                        </div>
+                    </div>
+
+                    <div class="settings-body">
+                         <div class="settings-list" id="settings-list">
+                            <!-- Dynamic Content -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- About View -->
+                <div class="glass-card hidden" id="about-view">
+                    <div class="card-header">
+                        <h2><i class="ri-information-line"></i> <span data-i18n="about">关于</span></h2>
+                    </div>
+                    <div class="card-body" style="text-align: center;">
+                        <div class="about-content">
+                            <h3>点名系统</h3>
+                            <p class="version">Version 1.28</p>
+                            <div class="author-info">
+                                <p>Designed & Developed by</p>
+                                <h4 id="author-name">曹沄凡</h4>
+                            </div>
+                            <div class="copyright-info">
+                                <p>&copy; 2025 Class System. All rights reserved.</p>
+                            </div>
+
+                            <div class="about-actions" style="margin-top: 20px; display: flex; justify-content: center; gap: 15px;">
+                                <button id="github-btn" class="mode-btn">
+                                    <i class="ri-github-fill"></i> GitHub
+                                </button>
+                                <button id="check-update-btn" class="mode-btn">
+                                    <i class="ri-refresh-line"></i> <span data-i18n="checkUpdate">检查更新</span>
+                                </button>
+                            </div>
+                            
+                            <!-- Hidden Secret Input Area -->
+                            <div id="secret-area" class="hidden" style="margin-top: 20px;">
+                                <input type="text" id="secret-input" class="prob-input" style="width: 200px; text-align: left;" placeholder="Type something...">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Settings View -->
+                <div class="glass-card settings-view hidden" id="settings-view">
+                    <div class="card-header">
+                        <h2><i class="ri-settings-4-line"></i> <span data-i18n="settings">设置</span></h2>
+                    </div>
+                    
+                    <div class="settings-body">
+                        <!-- General Settings Section -->
+                        <div class="settings-section">
+                            <h3 data-i18n="generalSettings">通用设置</h3>
+                            <div class="setting-row">
+                                <label data-i18n="language">语言</label>
+                                <select id="lang-select" class="custom-select">
+                                    <option value="zh-CN">简体中文</option>
+                                    <option value="en-US">English</option>
+                                </select>
+                            </div>
+                            <div class="setting-row">
+                                <label data-i18n="theme">背景模式</label>
+                                <div class="theme-options" id="bg-theme-options">
+                                    <div class="theme-wrapper" title="Black Mode">
+                                        <div class="theme-circle theme-black active" data-bg="black"></div>
+                                        <span class="color-label" data-i18n="colorBlack">Black</span>
+                                    </div>
+                                    <div class="theme-wrapper" title="White Mode">
+                                        <div class="theme-circle theme-white" data-bg="white"></div>
+                                        <span class="color-label" data-i18n="colorWhite">White</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="setting-row">
+                                <label data-i18n="accentColor">组件配色</label>
+                                <div class="theme-options" id="accent-theme-options">
+                                    <div class="theme-wrapper" title="Blue">
+                                        <div class="theme-circle accent-blue active" data-accent="blue"></div>
+                                        <span class="color-label" data-i18n="colorBlue">Blue</span>
+                                    </div>
+                                    <div class="theme-wrapper" title="Purple">
+                                        <div class="theme-circle accent-purple" data-accent="purple"></div>
+                                        <span class="color-label" data-i18n="colorPurple">Purple</span>
+                                    </div>
+                                    <div class="theme-wrapper" title="Green">
+                                        <div class="theme-circle accent-green" data-accent="green"></div>
+                                        <span class="color-label" data-i18n="colorGreen">Green</span>
+                                    </div>
+                                    <div class="theme-wrapper" title="Orange">
+                                        <div class="theme-circle accent-orange" data-accent="orange"></div>
+                                        <span class="color-label" data-i18n="colorOrange">Orange</span>
+                                    </div>
+                                    <div class="theme-wrapper" title="Silver">
+                                        <div class="theme-circle accent-silver" data-accent="silver"></div>
+                                        <span class="color-label" data-i18n="colorSilver">Silver</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="setting-row">
+                                <label data-i18n="animDuration">动画时长</label>
+                                <select id="anim-duration-select" class="custom-select">
+                                    <option value="0" data-i18n="animNone">无动画 (即时)</option>
+                                    <option value="1000">1s</option>
+                                    <option value="2000">2s</option>
+                                    <option value="3000">3s</option>
+                                    <option value="5000">5s</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <hr class="divider">
+
+                        <!-- Data Management Section (New) -->
+                        <div class="settings-section">
+                            <h3 data-i18n="dataManagement">数据管理</h3>
+                            <div class="setting-row" style="display: block;">
+                                <p style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 10px;" data-i18n="dataDesc">
+                                    导出或导入您的设置、历史记录和概率配置。
+                                </p>
+                                <div class="data-btn-group">
+                                    <button class="data-btn" id="export-btn">
+                                        <i class="ri-download-line"></i> <span data-i18n="exportData">导出</span>
+                                    </button>
+                                    <button class="data-btn" id="import-btn">
+                                        <i class="ri-upload-line"></i> <span data-i18n="importData">导入</span>
+                                    </button>
+                                    <input type="file" id="import-file" accept=".json" style="display: none;">
+                                </div>
+                                <div class="data-btn-group">
+                                    <button class="data-btn danger" id="clear-data-btn">
+                                        <i class="ri-delete-bin-line"></i> <span data-i18n="clearData">清除数据</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <!-- Footer -->
+            <footer class="bottom-bar">
+                <div class="copyright">
+                    &copy; 2025 Class System. All rights reserved.
+                </div>
+                <div class="designer-tag">
+                    Design by This 曹沄凡
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <script>
+        window.onerror = function(msg, url, line, col, error) {
+            // alert("JS Error: " + msg + "\nLine: " + line);
+            console.error("Global Error Handler:", error);
+            return false;
+        };
+    </script>
+    <script src="script.js"></script>
+</body>
+</html>
